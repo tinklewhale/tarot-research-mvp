@@ -4,5 +4,6 @@ secrets/
 output/*.csv
 output/*.json
 output/*.log
+site/index.html
 __pycache__/
 *.pyc

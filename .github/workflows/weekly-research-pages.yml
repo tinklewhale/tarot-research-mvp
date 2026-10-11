@@ -1,0 +1,72 @@
+name: Weekly tarot research and Pages
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 09:05 every Monday in Asia/Seoul. GitHub Actions cron uses UTC.
+    - cron: "5 0 * * 1"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      TZ: Asia/Seoul
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+      YOUTUBE_MAX_RESULTS_PER_QUERY: "10"
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4.1-mini' }}
+      INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+      INSTAGRAM_IG_USER_ID: ${{ secrets.INSTAGRAM_IG_USER_ID }}
+      META_GRAPH_VERSION: v23.0
+      GOOGLE_SERVICE_ACCOUNT_FILE: ${{ github.workspace }}/secrets/google-service-account.json
+      GOOGLE_SHEETS_SPREADSHEET_ID: ${{ secrets.GOOGLE_SHEETS_SPREADSHEET_ID }}
+      GOOGLE_SHEETS_RAW_SHEET: raw_posts
+      GOOGLE_SHEETS_CLASSIFIED_SHEET: classified_topics
+      GOOGLE_SHEETS_IDEAS_SHEET: weekly_ideas
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write Google service account
+        run: |
+          mkdir -p secrets
+          printf '%s' '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > "$GOOGLE_SERVICE_ACCOUNT_FILE"
+
+      - name: Run research pipeline
+        run: python scripts/run_pipeline.py
+
+      - name: Generate Pages site
+        run: python scripts/generate_site.py
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
