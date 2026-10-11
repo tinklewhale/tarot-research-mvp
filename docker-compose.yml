@@ -1,0 +1,31 @@
+name: tarot-research-mvp
+
+services:
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+      GENERIC_TIMEZONE: ${TZ:-Asia/Seoul}
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      NODES_EXCLUDE: "[]"
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    volumes:
+      - ./:/workspace
+      - n8n_data:/home/node/.n8n
+    working_dir: /workspace
+    command: n8n start
+    restart: unless-stopped
+
+volumes:
+  n8n_data:

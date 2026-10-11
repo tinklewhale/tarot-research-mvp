@@ -1,0 +1,13 @@
+{
+  "name": "tarot-research-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "n8n": "n8n start",
+    "n8n:import": "n8n import:workflow --input=./n8n/workflows/tarot-research-mvp.json"
+  },
+  "dependencies": {
+    "dotenv-cli": "^7.4.2",
+    "n8n": "^1.88.0"
+  }
+}
