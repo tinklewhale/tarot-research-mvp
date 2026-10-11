@@ -27,6 +27,10 @@ jobs:
       YOUTUBE_MAX_RESULTS_PER_QUERY: "10"
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4.1-mini' }}
+      # LLM_PROVIDER=openai|anthropic (repository variable). Unset: openai if OPENAI_API_KEY exists, else anthropic.
+      LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL || 'claude-opus-5-5' }}
       INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
       INSTAGRAM_IG_USER_ID: ${{ secrets.INSTAGRAM_IG_USER_ID }}
       META_GRAPH_VERSION: v23.0
@@ -35,6 +39,8 @@ jobs:
       GOOGLE_SHEETS_RAW_SHEET: raw_posts
       GOOGLE_SHEETS_CLASSIFIED_SHEET: classified_topics
       GOOGLE_SHEETS_IDEAS_SHEET: weekly_ideas
+      CLAUDE_CRAWL_DRIVE_FOLDER_ID: ${{ vars.CLAUDE_CRAWL_DRIVE_FOLDER_ID || '1_5FYHF5haixRGH8Dh-jolrwWf3jivOjz' }}
+      CLAUDE_CRAWL_SPREADSHEET_ID: ${{ vars.CLAUDE_CRAWL_SPREADSHEET_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,6 +60,20 @@ jobs:
 
       - name: Run research pipeline
         run: python scripts/run_pipeline.py
+
+      - name: Fetch Claude weekly crawl sheet
+        # The Claude cloud routine uploads one Google Sheet per week to the Drive folder.
+        # Needs: Drive API enabled for the service-account project + folder shared with the service account.
+        # Failure here must not block the dashboard, so the step only warns.
+        continue-on-error: true
+        run: python scripts/fetch_claude_crawl.py
+
+      - name: Analyze YouTube transcripts
+        # Downloads Korean auto-captions (no API key) and asks OpenAI how each reader runs the reading.
+        # Results merge into data/transcript_analysis.json (committed cache). YouTube often blocks
+        # datacenter IPs, so this is best effort: when blocked, the committed cache is what gets rendered.
+        continue-on-error: true
+        run: python scripts/analyze_transcripts.py --limit 60
 
       - name: Generate Pages site
         run: python scripts/generate_site.py

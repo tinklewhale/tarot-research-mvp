@@ -1,0 +1,76 @@
+name: Deploy dashboard
+
+# Rebuilds and deploys the GitHub Pages dashboard WITHOUT re-running the research pipeline.
+# Pipeline data is read from the Google Sheet *_latest tabs, so nothing is appended to the sheet.
+# Triggered when the local transcript-analysis task pushes data/transcript_analysis.json, or manually.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/tarot-research-mvp
+    paths:
+      - data/transcript_analysis.json
+      - scripts/generate_site.py
+      - scripts/fetch_claude_crawl.py
+      - .github/workflows/deploy-dashboard.yml
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      TZ: Asia/Seoul
+      GOOGLE_SERVICE_ACCOUNT_FILE: ${{ github.workspace }}/secrets/google-service-account.json
+      GOOGLE_SHEETS_SPREADSHEET_ID: ${{ secrets.GOOGLE_SHEETS_SPREADSHEET_ID }}
+      GOOGLE_SHEETS_RAW_SHEET: raw_posts
+      GOOGLE_SHEETS_CLASSIFIED_SHEET: classified_topics
+      GOOGLE_SHEETS_IDEAS_SHEET: weekly_ideas
+      CLAUDE_CRAWL_DRIVE_FOLDER_ID: ${{ vars.CLAUDE_CRAWL_DRIVE_FOLDER_ID || '1_5FYHF5haixRGH8Dh-jolrwWf3jivOjz' }}
+      CLAUDE_CRAWL_SPREADSHEET_ID: ${{ vars.CLAUDE_CRAWL_SPREADSHEET_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write Google service account
+        run: |
+          mkdir -p secrets
+          printf '%s' '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > "$GOOGLE_SERVICE_ACCOUNT_FILE"
+
+      - name: Fetch Claude weekly crawl sheet
+        continue-on-error: true
+        run: python scripts/fetch_claude_crawl.py
+
+      - name: Generate Pages site from the sheet
+        run: python scripts/generate_site.py --pipeline-source sheet
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

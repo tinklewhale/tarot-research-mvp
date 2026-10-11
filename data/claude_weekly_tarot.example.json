@@ -1,16 +1,99 @@
 {
-  "summary": "Claude 주간 타로 크롤링 결과 요약을 여기에 넣습니다.",
-  "items": [
+  "schema_version": 2,
+  "generated_at": "2026-10-06T09:10:00+09:00",
+  "run_date": "2026-10-05",
+  "source": {
+    "kind": "google_sheet",
+    "spreadsheet_id": "1iplrdbOS4eRNIHTm1_DlfNiprQj9_PBU0poRi4S_7Dg",
+    "title": "레타 주간 타로 크롤링_2026-10-05",
+    "run_date": "2026-10-05",
+    "url": "https://docs.google.com/spreadsheets/d/1iplrdbOS4eRNIHTm1_DlfNiprQj9_PBU0poRi4S_7Dg/edit",
+    "folder_id": "1_5FYHF5haixRGH8Dh-jolrwWf3jivOjz",
+    "folder_url": "https://drive.google.com/drive/folders/1_5FYHF5haixRGH8Dh-jolrwWf3jivOjz"
+  },
+  "collection": {
+    "source_types": ["websearch_fallback"],
+    "has_view_metrics": false
+  },
+  "stats": { "collected": 2, "excluded": 1, "included": 1, "ideas": 1 },
+  "summary": {
+    "rows": [
+      { "label": "실행일", "value": "2026-10-05" },
+      { "label": "수집 건수", "value": "71건 (중복 제거 후)" },
+      { "label": "이번 주 3대 발견", "value": "" },
+      { "label": "1.", "value": "속마음·재회가 최대 격전지" },
+      { "label": "2.", "value": "월초 운세 트래픽, 그런데 타로는 비어 있음" },
+      { "label": "3.", "value": "덕질타로 공급 공백(블루오션)" },
+      { "label": "1순위 추천", "value": "그 사람이 끝내 부치지 못한 편지 (9.5)" }
+    ],
+    "findings": [
+      "속마음·재회가 최대 격전지",
+      "월초 운세 트래픽, 그런데 타로는 비어 있음",
+      "덕질타로 공급 공백(블루오션)"
+    ],
+    "top_recommendation": "그 사람이 끝내 부치지 못한 편지 (9.5)"
+  },
+  "content_ideas": [
     {
-      "platform": "claude",
-      "title": "예시 트렌드",
+      "idea_title": "그 사람이 끝내 부치지 못한 편지",
       "major_topic": "연애",
-      "sub_topic": "상대 속마음",
-      "signal": "반복 언급되는 후킹 포인트",
-      "summary": "해당 주제의 관찰 내용과 콘텐츠화 포인트",
-      "source_urls": [
-        "https://example.com/source"
-      ]
+      "sub_topic": "재회·속마음",
+      "hook": "편지봉투 셋 중 하나를 골라보세요",
+      "summary": "위로 톤으로 상대 속마음을 읽는 편지 컨셉 리딩",
+      "recommended_format": "reels",
+      "source_urls": ["https://www.youtube.com/watch?v=example"],
+      "priority_score": 9.5
+    }
+  ],
+  "topic_classification": [
+    {
+      "major_topic": "연애",
+      "sub_topic": "재회·속마음",
+      "content_angle": "팩폭 vs 위로",
+      "target_emotion": "불안",
+      "confidence": 0.9
+    }
+  ],
+  "keyword_stats": [
+    { "keyword": "재회 타로", "collected": 2, "included": 1, "excluded": 1, "views": 0 }
+  ],
+  "raw_crawl": [
+    {
+      "run_date": "2026-10-05",
+      "platform": "youtube",
+      "keyword": "재회 타로",
+      "title": "이별 후 그 사람, 후회했을까요?",
+      "author": "example_channel",
+      "published_at": "2026-10-01",
+      "url": "https://www.youtube.com/watch?v=example",
+      "views": null,
+      "likes": null,
+      "duration_min": null,
+      "exclude_reason": "",
+      "source_type": "websearch_fallback"
+    },
+    {
+      "run_date": "2026-10-05",
+      "platform": "youtube",
+      "keyword": "재회 타로",
+      "title": "타로 배우기 기초 강의",
+      "author": "example_academy",
+      "published_at": "2026-09-30",
+      "url": "https://www.youtube.com/watch?v=example2",
+      "views": null,
+      "likes": null,
+      "duration_min": null,
+      "exclude_reason": "강의형",
+      "source_type": "websearch_fallback"
+    }
+  ],
+  "archive": [
+    {
+      "id": "previous-sheet-id",
+      "title": "레타 주간 타로 크롤링_2026-09-28",
+      "run_date": "2026-09-28",
+      "modified_time": "2026-09-28T00:30:00Z",
+      "url": "https://docs.google.com/spreadsheets/d/previous-sheet-id/edit"
     }
   ]
 }

@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import sys
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -11,6 +12,9 @@ import gspread
 import requests
 from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from llm_client import call_llm_json  # noqa: E402
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -279,31 +283,8 @@ def heuristic_sub_topic(post: Post) -> str:
 
 
 def call_openai_json(system_prompt: str, user_prompt: str) -> Optional[Dict]:
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini").strip()
-    if not api_key:
-        return None
-
-    response = requests.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": model,
-            "response_format": {"type": "json_object"},
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            "temperature": 0.2,
-        },
-        timeout=60,
-    )
-    response.raise_for_status()
-    content = response.json()["choices"][0]["message"]["content"]
-    return json.loads(content)
+    """Kept for backwards compatibility: routes through the provider-agnostic client (OpenAI or Claude)."""
+    return call_llm_json(system_prompt, user_prompt, max_tokens=1024)
 
 
 def classify_post(post: Post, config: Dict, exclude_reason: Optional[str]) -> Dict:
@@ -472,6 +453,19 @@ def get_or_create_worksheet(spreadsheet, title: str, headers: List[str]):
     return worksheet
 
 
+def overwrite_latest_worksheet(spreadsheet, title: str, headers: List[str], rows: List[List]) -> None:
+    """Keep a `<sheet>_latest` tab that only holds this run's rows.
+
+    The history tabs grow every week; the Claude weekly routine reads these small tabs instead.
+    """
+    try:
+        worksheet = spreadsheet.worksheet(title)
+    except gspread.WorksheetNotFound:
+        worksheet = spreadsheet.add_worksheet(title=title, rows=max(len(rows) + 10, 100), cols=max(len(headers), 12))
+    worksheet.clear()
+    worksheet.update([headers] + rows, value_input_option="USER_ENTERED")
+
+
 def append_sheet_rows(raw_rows: List[Dict], classified_rows: List[Dict], weekly_ideas: List[Dict]) -> None:
     _, spreadsheet = get_gspread_client()
     if not spreadsheet:
@@ -507,8 +501,10 @@ def append_sheet_rows(raw_rows: List[Dict], classified_rows: List[Dict], weekly_
         idea_headers,
     )
 
-    if raw_rows:
-        raw_sheet.append_rows([[row.get(header, "") for header in raw_headers] for row in raw_rows], value_input_option="USER_ENTERED")
+    raw_values = [[row.get(header, "") for header in raw_headers] for row in raw_rows]
+    if raw_values:
+        raw_sheet.append_rows(raw_values, value_input_option="USER_ENTERED")
+    overwrite_latest_worksheet(spreadsheet, f"{raw_sheet.title}_latest", raw_headers, raw_values)
     if classified_rows:
         formatted = []
         for row in classified_rows:
@@ -527,6 +523,7 @@ def append_sheet_rows(raw_rows: List[Dict], classified_rows: List[Dict], weekly_
                 classification["confidence"],
             ])
         classified_sheet.append_rows(formatted, value_input_option="USER_ENTERED")
+        overwrite_latest_worksheet(spreadsheet, f"{classified_sheet.title}_latest", classified_headers, formatted)
     if weekly_ideas:
         idea_rows = []
         run_date = now_kst().strftime("%Y-%m-%d")
@@ -543,6 +540,7 @@ def append_sheet_rows(raw_rows: List[Dict], classified_rows: List[Dict], weekly_
                 idea.get("priority_score", ""),
             ])
         ideas_sheet.append_rows(idea_rows, value_input_option="USER_ENTERED")
+        overwrite_latest_worksheet(spreadsheet, f"{ideas_sheet.title}_latest", idea_headers, idea_rows)
 
 
 def main() -> None:
