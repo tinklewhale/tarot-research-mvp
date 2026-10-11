@@ -1,0 +1,16 @@
+{
+  "summary": "Claude 주간 타로 크롤링 결과 요약을 여기에 넣습니다.",
+  "items": [
+    {
+      "platform": "claude",
+      "title": "예시 트렌드",
+      "major_topic": "연애",
+      "sub_topic": "상대 속마음",
+      "signal": "반복 언급되는 후킹 포인트",
+      "summary": "해당 주제의 관찰 내용과 콘텐츠화 포인트",
+      "source_urls": [
+        "https://example.com/source"
+      ]
+    }
+  ]
+}

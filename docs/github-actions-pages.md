@@ -1,4 +1,4 @@
-# GitHub Actions
+# GitHub Actions and Pages
 
 This setup can run the tarot research pipeline without keeping the Mac awake.
 
@@ -10,9 +10,21 @@ The workflow in `.github/workflows/weekly-research-pages.yml`:
 2. Runs `scripts/run_pipeline.py`.
 3. Writes results to Google Sheets.
 4. Generates a static summary page with `scripts/generate_site.py`.
-5. Uploads the generated HTML as a GitHub Actions artifact.
+5. Deploys the page to GitHub Pages.
 
 The workflow can also be run manually from the GitHub Actions tab.
+
+## Optional Claude crawl section
+
+The dashboard can include results from another Claude weekly tarot crawling job.
+
+Add a file at:
+
+```text
+data/claude_weekly_tarot.json
+```
+
+Use `data/claude_weekly_tarot.example.json` as the schema. If the file is missing, the dashboard shows a placeholder section instead.
 
 ## Required GitHub secrets
 
@@ -34,33 +46,15 @@ Optional Instagram secrets:
 
 GitHub Pages is available for public repositories on GitHub Free. For private repositories, GitHub Pages may require GitHub Pro, Team, or Enterprise depending on the account plan.
 
-Pages is not available for this private repository on the current plan. The workflow still runs the automation and writes to Google Sheets. The generated HTML dashboard is stored as an Actions artifact instead of being deployed as a public web page.
+The repository is public, so GitHub Pages can publish the generated dashboard without a paid GitHub plan.
 
-## Run manually
+## Enable Pages
 
 In GitHub:
 
 1. Open the repository.
-2. Go to `Actions`.
-3. Select `Weekly tarot research`.
-4. Click `Run workflow`.
-
-After the run completes, open the run details and download the `tarot-research-dashboard` artifact to view the generated HTML dashboard.
-
-## Enabling GitHub Pages later
-
-If the repository becomes public or the account plan supports private repository Pages, restore Pages deployment by replacing the artifact upload step with:
-
-```yaml
-- name: Configure Pages
-  uses: actions/configure-pages@v5
-
-- name: Upload Pages artifact
-  uses: actions/upload-pages-artifact@v3
-  with:
-    path: site
-
-- name: Deploy to GitHub Pages
-  id: deployment
-  uses: actions/deploy-pages@v4
-```
+2. Go to `Settings` > `Pages`.
+3. Set source to `GitHub Actions`.
+4. Go to `Actions`.
+5. Select `Weekly tarot research and Pages`.
+6. Click `Run workflow`.

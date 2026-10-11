@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "output"
 SITE_DIR = ROOT / "site"
+CLAUDE_WEEKLY_TAROT_PATH = ROOT / "data" / "claude_weekly_tarot.json"
 KST = timezone(timedelta(hours=9))
 
 
@@ -73,6 +74,58 @@ def render_topic_table(classified_rows: List[Dict]) -> str:
     return "\n".join(rows)
 
 
+def load_claude_weekly_tarot() -> Dict:
+    if not CLAUDE_WEEKLY_TAROT_PATH.exists():
+        return {}
+    try:
+        return load_json(CLAUDE_WEEKLY_TAROT_PATH)
+    except Exception as error:
+        return {"error": str(error)}
+
+
+def render_claude_section(data: Dict) -> str:
+    if not data:
+        return """
+        <section>
+          <h2>Claude 주간 크롤링</h2>
+          <p>아직 연결된 Claude 주간 타로 크롤링 결과가 없습니다. <code>data/claude_weekly_tarot.json</code> 파일을 추가하면 이 섹션에 자동 표시됩니다.</p>
+        </section>
+        """
+    if data.get("error"):
+        return f"""
+        <section>
+          <h2>Claude 주간 크롤링</h2>
+          <p>Claude 결과 파일을 읽지 못했습니다: {esc(data.get("error"))}</p>
+        </section>
+        """
+
+    items = data.get("items", [])
+    trend_cards = []
+    for item in items[:16]:
+        source_links = []
+        for url in item.get("source_urls", [])[:3]:
+            source_links.append(f'<a href="{esc(url)}" target="_blank" rel="noreferrer">source</a>')
+        trend_cards.append(
+            f"""
+            <article class="card">
+              <div class="meta">{esc(item.get("platform"))} · {esc(item.get("major_topic"))}</div>
+              <h3>{esc(item.get("title"))}</h3>
+              <p class="hook">{esc(item.get("signal"))}</p>
+              <p>{esc(item.get("summary"))}</p>
+              <div class="links">{' '.join(source_links)}</div>
+            </article>
+            """
+        )
+
+    return f"""
+    <section>
+      <h2>Claude 주간 크롤링</h2>
+      <p>{esc(data.get("summary", "Claude에서 가져온 주간 타로 크롤링 요약입니다."))}</p>
+      <div class="grid">{''.join(trend_cards) if trend_cards else '<p>No items</p>'}</div>
+    </section>
+    """
+
+
 def render_distribution(counter: Counter) -> str:
     if not counter:
         return "<p>No data</p>"
@@ -100,6 +153,7 @@ def main() -> None:
     raw_rows = load_json(raw_path)
     classified_rows = load_json(classified_path)
     ideas = load_json(ideas_path)
+    claude_weekly_tarot = load_claude_weekly_tarot()
 
     major_counter = Counter()
     sub_counter = Counter()
@@ -193,6 +247,8 @@ def main() -> None:
       <div class="grid">{render_idea_cards(ideas)}</div>
     </section>
 
+    {render_claude_section(claude_weekly_tarot)}
+
     <section>
       <h2>대주제 분포</h2>
       {render_distribution(major_counter)}
@@ -223,4 +279,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

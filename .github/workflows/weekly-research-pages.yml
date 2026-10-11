@@ -1,4 +1,4 @@
-name: Weekly tarot research
+name: Weekly tarot research and Pages
 
 on:
   workflow_dispatch:
@@ -8,14 +8,19 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: weekly-tarot-research
+  group: github-pages
   cancel-in-progress: false
 
 jobs:
   research:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     env:
       TZ: Asia/Seoul
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -53,8 +58,14 @@ jobs:
       - name: Generate Pages site
         run: python scripts/generate_site.py
 
-      - name: Upload HTML dashboard artifact
-        uses: actions/upload-artifact@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: tarot-research-dashboard
           path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
