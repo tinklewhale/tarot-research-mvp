@@ -1,4 +1,4 @@
-# GitHub Actions and Pages
+# GitHub Actions
 
 This setup can run the tarot research pipeline without keeping the Mac awake.
 
@@ -10,7 +10,7 @@ The workflow in `.github/workflows/weekly-research-pages.yml`:
 2. Runs `scripts/run_pipeline.py`.
 3. Writes results to Google Sheets.
 4. Generates a static summary page with `scripts/generate_site.py`.
-5. Deploys the page to GitHub Pages.
+5. Uploads the generated HTML as a GitHub Actions artifact.
 
 The workflow can also be run manually from the GitHub Actions tab.
 
@@ -34,14 +34,33 @@ Optional Instagram secrets:
 
 GitHub Pages is available for public repositories on GitHub Free. For private repositories, GitHub Pages may require GitHub Pro, Team, or Enterprise depending on the account plan.
 
-If Pages is not available for this private repository, the scheduled workflow can still write to Google Sheets. In that case, remove or disable the Pages deployment steps.
+Pages is not available for this private repository on the current plan. The workflow still runs the automation and writes to Google Sheets. The generated HTML dashboard is stored as an Actions artifact instead of being deployed as a public web page.
 
-## Enable Pages
+## Run manually
 
 In GitHub:
 
-1. Open the repository settings.
-2. Go to `Pages`.
-3. Set source to `GitHub Actions`.
-4. Run `Weekly tarot research and Pages` manually once.
+1. Open the repository.
+2. Go to `Actions`.
+3. Select `Weekly tarot research`.
+4. Click `Run workflow`.
 
+After the run completes, open the run details and download the `tarot-research-dashboard` artifact to view the generated HTML dashboard.
+
+## Enabling GitHub Pages later
+
+If the repository becomes public or the account plan supports private repository Pages, restore Pages deployment by replacing the artifact upload step with:
+
+```yaml
+- name: Configure Pages
+  uses: actions/configure-pages@v5
+
+- name: Upload Pages artifact
+  uses: actions/upload-pages-artifact@v3
+  with:
+    path: site
+
+- name: Deploy to GitHub Pages
+  id: deployment
+  uses: actions/deploy-pages@v4
+```
